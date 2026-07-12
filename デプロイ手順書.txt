@@ -1,2 +1,5 @@
 デプロイ手順書
+.\profile-creator-backend\functions\venv\Scripts\Activate.ps1
 .\functions\venv\Scripts\python.exe -m pip install -r .\functions\requirements.txt
+
+python -m pip install psycopg2
