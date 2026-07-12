@@ -13,10 +13,23 @@ PGPASSWORD='npg_Bko6mP2yNGRc'
 PGSSLMODE='require'
 PGCHANNELBINDING='require'
 
+# CORS対応のためのデフォルトヘッダー
+def_headers = {"Access-Control-Allow-Origin": "*"}
+
 @https_fn.on_request()
 def addmessage(req: https_fn.Request) -> https_fn.Response:
     """Take the text parameter passed to this HTTP endpoint and insert it into
     a new document in the messages collection."""
+
+    # CORS対応（フロントエンドからのリクエストを許可するため）
+    if req.method == "OPTIONS":
+        headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST",
+            "Access-Control-Allow-Headers": "Content-Type",
+        }
+        return https_fn.Response("", status=204, headers=headers)
+
     # Grab the text parameter.
     original = req.args.get("text")
     conn = psycopg2.connect(
@@ -36,9 +49,9 @@ def addmessage(req: https_fn.Request) -> https_fn.Response:
    
     if rows:
         response_text = "\n".join([str(row) for row in rows])
-        return https_fn.Response(response_text)
+        return https_fn.Response(response_text, headers=def_headers)
     else:
-        return https_fn.Response("No data found")
+        return https_fn.Response("No data found", headers=def_headers)
 
 @https_fn.on_request()
 def create_profile(req: https_fn.Request) -> https_fn.Response:
@@ -52,17 +65,17 @@ def create_profile(req: https_fn.Request) -> https_fn.Response:
             "Access-Control-Allow-Methods": "POST",
             "Access-Control-Allow-Headers": "Content-Type",
         }
-        return https_fn.Response("", status=204, headers=headers)
+        return https_fn.Response("", status=204, headers=def_headers)
 
     headers = {"Access-Control-Allow-Origin": "*"}
 
     if req.method != "POST":
-        return https_fn.Response("Method Not Allowed", status=405, headers=headers)
+        return https_fn.Response("Method Not Allowed", status=405, headers=def_headers)
 
     # リクエストボディからJSONデータを取得
     data = req.get_json(silent=True)
     if not data:
-        return https_fn.Response("Invalid JSON data", status=400, headers=headers)
+        return https_fn.Response("Invalid JSON data", status=400, headers=def_headers)
 
     PGHOST='ep-withered-smoke-aowkgu5t-pooler.c-2.ap-southeast-1.aws.neon.tech'
     PGDATABASE='neondb'
